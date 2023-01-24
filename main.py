@@ -15,9 +15,11 @@ import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
+from transformers import get_scheduler
 
 from utils import Config, set_seed
 from data import load_abm_data, ABMDataProcessor
+from src import FeedForward, SingleStepTrainer
 
 
 if __name__ == "__main__":  
@@ -42,4 +44,44 @@ if __name__ == "__main__":
     data_processor = ABMDataProcessor(config)
     train_dataloader, val_dataloader, test_dataloader = data_processor.build_dataloaders(data)
 
+    model = FeedForward(config)
+    model.to(device)
     
+    print("test model on sample input")
+    out = model(torch.rand(4, config.context_len, 5, 10, 10))
+    print(out.shape)
+
+    loss_fn = torch.nn.MSELoss()
+
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=config.learning_rate)
+
+    num_training_steps = config.train_epochs * len(train_dataloader)
+    scheduler = get_scheduler(
+        "linear",
+        optimizer=optimizer,
+        num_warmup_steps=0,
+        num_training_steps=num_training_steps,
+    )
+
+    trainer = SingleStepTrainer(model, loss_fn, optimizer, scheduler, config, device)
+    if (config.train):
+        trainer.train(train_dataloader)
+
+    # maybe save model and optimizer
+    if (config.save_model_optimizer):
+        print("saving model, optimizer, and scheduler at {}/model_optimizer_scheduler.pt".format(config.save_load_path))
+        os.makedirs("{}/".format(config.save_load_path), exist_ok=True)
+        torch.save({
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'scheduler_state_dict': scheduler.state_dict(),
+        }, "{}/model_optimizer_scheduler.pt".format(config.save_load_path))
+
+    # maybe load model and optimizer
+    if (config.load_model_optimizer):
+        print("loading model and optimizer from {}/model_optimizer_scheduler.pt".format(config.save_load_path))
+        checkpoint = torch.load(
+            "{}/model_optimizer_scheduler.pt".format(config.save_load_path))
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
