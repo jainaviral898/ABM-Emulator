@@ -1,0 +1,23 @@
+# general parameters
+seed:  3407
+save_load_path: experiments/baseline-script-check 
+train: True
+inference: True
+save_model_optimizer: True
+load_model_optimizer: False
+
+# data parameters
+data_path: data-dir/Simulator_v1.7/results/v1.7_R0_Experiments/
+train_fraction: 0.8
+val_fraction: 0.1
+test_fraction: 0.1
+context_len: 5
+
+# training parameters
+train_batch_size: 4
+val_batch_size: 4
+
+# wandb parameters
+use_wandb: False
+wandb_path: baseline-script-check
+wandb_project: neural-agent-based-modeling 

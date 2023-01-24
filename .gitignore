@@ -1,0 +1,6 @@
+data-dir/*
+experiments/*
+wandb/*
+*.DS_Store*
+*cache*
+*ipynb*
