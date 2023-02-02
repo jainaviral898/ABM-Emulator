@@ -15,11 +15,53 @@ import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
-from transformers import get_scheduler
+# from transformers import get_scheduler
 
 from utils import Config, set_seed
 from data import load_abm_data, ABMDataProcessor
-from src import FeedForward, SingleStepTrainer
+from src import FeedForward, DilatedCNN, UNet, SingleStepTrainer
+
+def set_params(config):
+    
+    # loss = "MSE" or "CrossEntropy" or "BCE"
+    # optimizer = "Adam" or "SGD" or "Adagrad" or "Adadelta"
+    # scheduler = "multiplicative" or "step" or "exponential" or "plateau"
+    # model = "FeedForward" or "DilatedCNN" or "UNet"
+    
+    if config.loss_fn == "MSE": 
+        loss_fn = torch.nn.MSELoss()
+    elif config.loss_fn == "CrossEntropy":
+        loss_fn = torch.nn.CrossEntropyLoss()
+    elif config.loss_fn == "BCE":
+        loss_fn = torch.nn.BCELoss()
+
+    if config.optimizer == "Adam":
+        optimizer =  torch.optim.Adam()
+    elif config.optimizer == "SGD":
+        optimizer = torch.optim.SGD()
+    elif config.optimizer == "Adagrad":
+        optimizer = torch.optim.Adagrad()
+    elif config.optimizer == "Adadelta":
+        optimizer = torch.optim.Adadelta()
+
+    if config.scheduler == "multiplicative": 
+        lmbda = lambda epoch: 0.65 ** epoch
+        scheduler = torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lmbda)
+    elif config.scheduler == "step":
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
+    elif config.scheduler == "exponential":
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
+    elif config.scheduler == "plateau":
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
+
+    if config.model == "FeedForward":
+        model = FeedForward(config)
+    elif config.model == "DilatedCNN":
+        model = DilatedCNN(config)
+    elif config.model == "UNet":
+        model = UNet(config)
+
+    return loss_fn, optimizer, scheduler, model   
 
 
 if __name__ == "__main__":  
@@ -44,26 +86,28 @@ if __name__ == "__main__":
     data_processor = ABMDataProcessor(config)
     train_dataloader, val_dataloader, test_dataloader = data_processor.build_dataloaders(data)
 
-    model = FeedForward(config)
+    loss_fn, optimizer, scheduler, model = set_params(config)
+    # model = FeedForward(config)
     model.to(device)
     
     print("test model on sample input")
     out = model(torch.rand(4, config.context_len, 5, 10, 10))
     print(out.shape)
 
-    loss_fn = torch.nn.MSELoss()
+    # loss_fn = torch.nn.MSELoss()
 
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=config.learning_rate)
+    # optimizer = torch.optim.Adam(
+    #     model.parameters(), lr=config.learning_rate)
 
     num_training_steps = config.train_epochs * len(train_dataloader)
-    scheduler = get_scheduler(
-        "linear",
-        optimizer=optimizer,
-        num_warmup_steps=0,
-        num_training_steps=num_training_steps,
-    )
 
+    # scheduler = get_scheduler(
+    #     "linear",
+    #     optimizer=optimizer,
+    #     num_warmup_steps=0,
+    #     num_training_steps=num_training_steps,
+    # )
+    
     trainer = SingleStepTrainer(model, loss_fn, optimizer, scheduler, config, device)
     if (config.train):
         trainer.train(train_dataloader)
