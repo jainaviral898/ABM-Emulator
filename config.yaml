@@ -23,6 +23,10 @@ train_batch_size: 4
 val_batch_size: 4
 train_epochs: 2
 learning_rate: 0.001
+model: FeedForward
+loss_fn: MSE
+optimizer: Adam
+scheduler: plateau
 
 # wandb parameters
 use_wandb: False
