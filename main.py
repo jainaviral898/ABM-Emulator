@@ -1,3 +1,4 @@
+%pip install yaml
 import os
 import glob
 import time
@@ -66,7 +67,7 @@ def set_params(config):
 
 if __name__ == "__main__":  
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="config.yaml",
+    parser.add_argument("--config", default="neural-agent-based-modeling/config.yaml",
                         help="config file path")
     args = parser.parse_args()
 
