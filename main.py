@@ -19,7 +19,7 @@ import torch.nn as nn
 
 from utils import Config, set_seed
 from data import load_abm_data, ABMDataProcessor
-from src import FeedForward, DilatedCNN, UNet, SingleStepTrainer
+from src import FeedForward, SingleStepTrainer
 
 def set_params(config):
     
