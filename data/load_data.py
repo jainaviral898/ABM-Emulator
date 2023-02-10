@@ -14,5 +14,5 @@ def load_abm_data(data_path):
 
 
 if __name__ == "__main__":
-    data = load_abm_data("data-dir/Simulator_v1.7/results/v1.7_R0_Experiments/")
+    data = load_abm_data("/content/drive/MyDrive/Emulator_Phase_2/Simulator_v1.7/results/v1.7_R0_Experiments/")
     print(data[0].shape)

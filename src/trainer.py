@@ -8,6 +8,10 @@ from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
 
 import torch
 
+def loss_function(outputs, targets, i, L):
+  # MSE + i/L (penalty)
+  mse = torch.nn.MSELoss()
+  return torch.add(mse(outputs, targets), torch.divide(i, L))
 
 class SingleStepTrainer():
     def __init__(self, model, loss_fn, optimizer, scheduler, config, device):
@@ -56,7 +60,8 @@ class SingleStepTrainer():
             # print(f"{target.shape=}")
 
             # update loss
-            batch_loss = self.loss_fn(target, prediction)
+            #batch_loss = self.loss_fn(target, prediction)
+            batch_loss = loss_function(prediction, target, time_step, self.config.t_steps)
             loss += batch_loss
             self.optimizer.zero_grad()
             batch_loss.backward()
@@ -74,9 +79,9 @@ class SingleStepTrainer():
             predicted_trajectory = torch.cat((predicted_trajectory, prediction), dim=1)
 
             if (self.config.use_wandb):
-                wandb.log({"{}_batch_loss".format(self.mode): batch_loss})
+                wandb.log({"batch_loss": batch_loss})
 
-        self.scheduler.step()
+        self.scheduler.step(batch_loss)
 
         return loss
 
@@ -87,11 +92,11 @@ class SingleStepTrainer():
                 epoch_loss = self.train_step(batch)
 
                 if (self.config.use_wandb):
-                    wandb.log({"{}_learning_rate".format(self.mode)
+                    wandb.log({"learning_rate"
                               : self.scheduler.get_last_lr()[0]})
 
             if (self.config.use_wandb):
-                wandb.log({"{}_epoch_loss".format(self.mode)
+                wandb.log({"epoch_loss"
                           : epoch_loss.item()/len(dataloader)})
 
     def test_step(self, batch):
