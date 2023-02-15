@@ -23,10 +23,14 @@ train_batch_size: 4
 val_batch_size: 4
 train_epochs: 2
 learning_rate: 0.001
-model: FeedForward
-loss_fn: MSE
-optimizer: Adam
-scheduler: plateau
+# model = feedforward, dilatedcnn,
+model: feedforward
+# loss = mse
+loss_fn: mse
+# optimizer = adam, sgd 
+optimizer: adam
+# scheduler = multiplicative, step, decay
+scheduler: step
 
 # wandb parameters
 use_wandb: True

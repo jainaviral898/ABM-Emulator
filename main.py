@@ -19,7 +19,34 @@ import torch.nn as nn
 
 from utils import Config, set_seed
 from data import load_abm_data, ABMDataProcessor
-from src import FeedForward, SingleStepTrainer
+from src import FeedForward, SingleStepTrainer, DilatedCNN
+
+def set_model(config, device):
+    if config.model == "feedforward":
+        return FeedForward(config).to(device)
+    elif config.model == "dilatedcnn":
+        return DilatedCNN(num_stats = config.num_feat_cols).to(device)
+
+def set_optimizer(config, model):
+    if config.optimizer == "adam":
+        return torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+    elif config.optimizer == "sgd":
+        return torch.optim.SGD(model.parameters(), lr=config.learning_rate)
+    
+def set_scheduler(config, optimizer):
+    if config.scheduler == "multiplicative":
+        lmbda = lambda epoch: 0.65 ** epoch
+        return torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lmbda)
+    elif config.scheduler == "step":
+        return torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.5)
+    elif config.scheduler == "decay":
+        return torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
+    
+def set_loss_fn(config):
+    if config.loss_fn == "mse":
+        return torch.nn.MSELoss()
+
+
 
 if __name__ == "__main__":  
     parser = argparse.ArgumentParser()
@@ -37,40 +64,36 @@ if __name__ == "__main__":
     set_seed(config.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    print("loading data")
+    print("Loading data")
     data = load_abm_data(config.data_path)
+    print("Data loaded. Length =", len(data))
 
     data_processor = ABMDataProcessor(config)
     train_dataloader, val_dataloader, test_dataloader = data_processor.build_dataloaders(data)
 
-    model = FeedForward(config)
-    model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
-    lmbda = lambda epoch: 0.65 ** epoch
-    scheduler = torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lmbda)
-    loss_fn = torch.nn.MSELoss()
+    # model = FeedForward(config)
+    # model.to(device)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+    # lmbda = lambda epoch: 0.65 ** epoch
+    # scheduler = torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lmbda)
+    # loss_fn = torch.nn.MSELoss()
+
+    model     = set_model(config, device)
+    optimizer = set_optimizer(config, model)
+    scheduler = set_scheduler(config, optimizer)
+    loss_fn   = set_loss_fn(config)
     
-    print("test model on sample input")
+    print("Testing model on sample input")
     out = model(torch.rand(4, config.context_len, 5, 10, 10).to(device))
-    print(out.shape)
-
-    
-
-    # optimizer = torch.optim.Adam(
-    #     model.parameters(), lr=config.learning_rate)
+    print("Model Output Shape", out.shape)
+    print("________________________________________________________")
 
     num_training_steps = config.train_epochs * len(train_dataloader)
 
-    # scheduler = get_scheduler(
-    #     "linear",
-    #     optimizer=optimizer,
-    #     num_warmup_steps=0,
-    #     num_training_steps=num_training_steps,
-    # )
-    
     trainer = SingleStepTrainer(model, loss_fn, optimizer, scheduler, config, device)
     if (config.train):
         trainer.train(train_dataloader)
+        print("Training complete.")
 
     # maybe save model and optimizer
     if (config.save_model_optimizer):
