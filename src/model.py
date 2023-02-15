@@ -66,6 +66,7 @@ class DilatedCNN(nn.Module):
     def forward(self, x):
         y = []
         x = x.reshape(-1, x.shape[0], x.shape[2], x.shape[3], x.shape[4])
+        # for each time step, apply the convolutions. input = (batch_size, num_channels, x, y)
         for xi in x:
             xi = F.relu(self.conv1(xi))
             xi = F.relu(self.conv2(xi))
