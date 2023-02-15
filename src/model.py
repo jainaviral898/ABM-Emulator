@@ -25,33 +25,61 @@ class FeedForward(torch.nn.Module):
 
         return x
 
-class DilatedCNN(torch.nn.Module):
-    def __init__(self):
+class DilatedCNN(nn.Module):
+    def __init__(self, num_stats=3, input_shape=torch.rand(4, 5, 10, 10).shape):
         super(DilatedCNN, self).__init__()
-        
-        self.fclayers = nn.Sequential(
-        nn.Conv2d(in_channels=5, out_channels=256, kernel_size = 5, stride = 1, padding= 'valid', dilation = 1),
-        nn.Conv2d(in_channels=256, out_channels=128, kernel_size = 3, stride = 1, padding= 'valid', dilation = 2),
-        nn.Conv2d(in_channels=128, out_channels=64, kernel_size = 1, stride = 1, padding= 'valid', dilation = 4),
-        nn.Flatten(start_dim=0),
-        nn.Linear(1280, 1000),
-        nn.ReLU(),
-        nn.Linear(1000, 300),
-        nn.ReLU(),
+        self.conv1 = nn.Conv2d(
+            in_channels=input_shape[1],
+            out_channels=256,
+            kernel_size=(5, 5),
+            stride=1,
+            padding=0,
+            dilation=1
         )
-    def forward(self, x):
-        print("the shape is", x.shape)
-        x = self.fclayers(x)
-        x = torch.reshape(x, (1, 3, 10, 10))
-        return x
+        self.conv2 = nn.Conv2d(
+            in_channels=256,
+            out_channels=128,
+            kernel_size=(3, 3),
+            stride=1,
+            padding=0,
+            dilation=2
+        )
+        self.conv3 = nn.Conv2d(
+            in_channels=128,
+            out_channels=64,
+            kernel_size=(1, 1),
+            stride=1,
+            padding=0,
+            dilation=4
+        )
+        self.fc1 = nn.Linear(
+            in_features=1280,
+            out_features=1000
+        )
+        self.fc2 = nn.Linear(
+            in_features=1000,
+            out_features=input_shape[2] * input_shape[3] * num_stats
+        )
+        self.num_stats = num_stats
+        self.input_shape = input_shape
 
-def double_conv(in_channels, out_channels):
-    return nn.Sequential(
-        nn.Conv2d(in_channels, out_channels, 3, padding='same'),
-        nn.ReLU(inplace=True),
-        nn.Conv2d(out_channels, out_channels, 3, padding='same'),
-        nn.ReLU(inplace=True)
-    )   
+    def forward(self, x):
+        y = []
+        x = x.reshape(-1, x.shape[0], x.shape[2], x.shape[3], x.shape[4])
+        for xi in x:
+            xi = F.relu(self.conv1(xi))
+            xi = F.relu(self.conv2(xi))
+            xi = F.relu(self.conv3(xi))
+            y.append(xi)
+        x = torch.stack(y)
+        #print(x.shape)
+        x = x.permute(1, 0, 2, 3, 4)
+        x = x.reshape(x.shape[0], -1)
+        #print(x.shape)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        x = x.view(-1, 1, self.num_stats, self.input_shape[2], self.input_shape[3])
+        return x
 
 class UNet(nn.Module):
 
