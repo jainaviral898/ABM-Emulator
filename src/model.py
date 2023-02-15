@@ -2,6 +2,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class FeedForward(torch.nn.Module):
     def __init__(self, config):
@@ -26,7 +27,7 @@ class FeedForward(torch.nn.Module):
         return x
 
 class DilatedCNN(nn.Module):
-    def __init__(self, num_stats=3, input_shape=torch.rand(4, 5, 10, 10).shape):
+    def __init__(self, num_stats=3, input_shape=torch.rand(4, 5, 5, 10, 10).shape):
         super(DilatedCNN, self).__init__()
         self.conv1 = nn.Conv2d(
             in_channels=input_shape[1],
@@ -58,7 +59,7 @@ class DilatedCNN(nn.Module):
         )
         self.fc2 = nn.Linear(
             in_features=1000,
-            out_features=input_shape[2] * input_shape[3] * num_stats
+            out_features=input_shape[3] * input_shape[4] * num_stats
         )
         self.num_stats = num_stats
         self.input_shape = input_shape
@@ -79,7 +80,7 @@ class DilatedCNN(nn.Module):
         #print(x.shape)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
-        x = x.view(-1, 1, self.num_stats, self.input_shape[2], self.input_shape[3])
+        x = x.view(self.input_shape[0], 1, self.num_stats, self.input_shape[2], self.input_shape[3])
         return x
 
 class UNet(nn.Module):
