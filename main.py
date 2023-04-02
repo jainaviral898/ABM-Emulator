@@ -20,7 +20,7 @@ import torch.nn as nn
 
 from utils import Config, set_seed
 from data import load_abm_data, ABMDataProcessor
-from src import FeedForward, SingleStepTrainer, DilatedCNN
+from src import FeedForward, SingleStepTrainer, DilatedCNN, make_plots
 
 def set_model(config, device):
     if config.model == "feedforward":
@@ -113,3 +113,7 @@ if __name__ == "__main__":
             "{}/model_optimizer_scheduler.pt".format(config.save_load_path))
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+    if(config.make_plots):
+        outputs = trainer.predict()
+        make_plots(outputs["actual_trajectory"], outputs["predicted_trajectory"], config)

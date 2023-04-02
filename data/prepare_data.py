@@ -12,7 +12,7 @@ class ABMDataProcessor():
         self.config = config
 
 
-    def preprocess_data(self, trajectory, data_transform):
+    def preprocess_data(self, trajectory, data_transform, config):
         preprocessed_data = {
             "trajectory": torch.stack([data_transform(trajectory[idx, :, :, :]).float() for idx in range(trajectory.shape[0])], dim=0)
         }
@@ -26,7 +26,7 @@ class ABMDataProcessor():
         }
 
         return batch
-
+    
 
     def build_dataloaders(self, trajectories):
         trajectories_train, trajectories_test = train_test_split(trajectories, test_size=self.config.test_fraction, random_state=self.config.seed, shuffle=True)
@@ -50,6 +50,8 @@ class ABMDataProcessor():
         train_data = [self.preprocess_data(trajectory, data_transform) for trajectory in trajectories_train]
         val_data = [self.preprocess_data(trajectory, data_transform) for trajectory in trajectories_val]
         test_data = [self.preprocess_data(trajectory, data_transform) for trajectory in trajectories_test]
+
+
 
         print("train_data sample")
         print(f"{train_data[0]['trajectory'].shape=}")
