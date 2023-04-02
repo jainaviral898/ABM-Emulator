@@ -27,6 +27,16 @@ class ABMDataProcessor():
 
         return batch
     
+    def get_io_data(self, trajectory_list):
+        data = {"context": [], "next_step": [], "R0": []}
+
+        for i in range(len(trajectory_list)):
+            for j in range(0, len(trajectory_list[i]) - self.config.context_len, self.config.context_len):
+                # data["trajectory"].append(trajectory_list[i][j : (j + self.config.context_len), :])
+                data["trajectory"].append(trajectory_list[i][j:(j + self.config.context_len), :, :, :])
+                data["next_step"].append(trajectory_list[i][(j + self.config.context_len), :, :, :])
+                data["R0"].append(trajectory_list[i][j + self.config.context_len,4,0,0])
+        return data
 
     def build_dataloaders(self, trajectories):
         trajectories_train, trajectories_test = train_test_split(trajectories, test_size=self.config.test_fraction, random_state=self.config.seed, shuffle=True)
@@ -55,6 +65,7 @@ class ABMDataProcessor():
 
         print("train_data sample")
         print(f"{train_data[0]['trajectory'].shape=}")
+        # {'trajectory': torch.Size([4, 100, 5, 10, 10])}
 
         train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=self.config.train_batch_size, collate_fn=self.collate_fn)
         val_dataloader = torch.utils.data.DataLoader(val_data, batch_size=self.config.val_batch_size, collate_fn=self.collate_fn)

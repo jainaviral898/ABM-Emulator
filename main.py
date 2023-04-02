@@ -12,6 +12,7 @@ import pandas as pd
 import matplotlib.cm as cm
 from tqdm.notebook import tqdm
 import matplotlib.pyplot as plt
+import lightning.pytorch as pl
 
 import torch
 import torch.nn as nn
@@ -91,9 +92,10 @@ if __name__ == "__main__":
 
     num_training_steps = config.train_epochs * len(train_dataloader)
 
-    trainer = SingleStepTrainer(model, loss_fn, optimizer, scheduler, config, device)
+    lightning_mod = SingleStepTrainer(model, loss_fn, config)
     if (config.train):
-        trainer.train(train_dataloader)
+        trainer = pl.Trainer(accelerator = "gpu", devices = 1)       
+        trainer.fit(model = lightning_mod, train_dataloaders = train_dataloader)
         print("Training complete.")
 
     # maybe save model and optimizer
