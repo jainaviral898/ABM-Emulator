@@ -5,6 +5,7 @@ from PIL import Image
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
+from torchmetrics import MeanAbsolutePercentageError
 
 import torch
 
@@ -12,6 +13,13 @@ def loss_function(outputs, targets, i, L):
   # MSE + i/L (penalty)
   mse = torch.nn.MSELoss()
   return torch.add(mse(outputs, targets), torch.divide(i, L))
+
+def loss_fn2(outputs, targets, i, L):
+  # loss = (1/n) * ∑(|y - ŷ| / y) * (1 + sign(y - ŷ)) + i/L (penalty)
+  # mape * sign + i/L
+  mape = MeanAbsolutePercentageError()
+  mape_ = mape(outputs, targets) * (1 + torch.sign(targets - outputs))
+  return torch.add(mape_, torch.divide(i, L))
 
 class SingleStepTrainer():
     def __init__(self, model, loss_fn, optimizer, scheduler, config, device):
