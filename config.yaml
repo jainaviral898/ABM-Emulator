@@ -3,7 +3,8 @@ seed:  3407
 save_load_path: experiments/baseline-script-check 
 train: True
 inference: True
-save_model_optimizer: True
+make_plots: True
+save_model_optimizer: False
 load_model_optimizer: False
 
 # data parameters
@@ -17,6 +18,7 @@ x_dim: 10
 y_dim: 10
 num_feat_cols: 3
 num_stat_cols: 2
+stats: ["cumulative_positive_tested", "current_hospitalized", "current_asymptomatic_free"]
 
 # training parameters
 train_batch_size: 4

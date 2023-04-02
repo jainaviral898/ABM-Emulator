@@ -59,7 +59,7 @@ class DilatedCNN(nn.Module):
         )
         self.fc2 = nn.Linear(
             in_features=1000,
-            out_features=input_shape[3] * input_shape[4] * num_stats
+            out_features=input_shape[4] * input_shape[3] * num_stats
         )
         self.num_stats = num_stats
         self.input_shape = input_shape
@@ -67,7 +67,7 @@ class DilatedCNN(nn.Module):
     def forward(self, x):
         y = []
         x = x.reshape(-1, x.shape[0], x.shape[2], x.shape[3], x.shape[4])
-        # for each time step, apply the convolutions. input = (batch_size, num_channels, x, y)
+        #print("here", x.shape)
         for xi in x:
             xi = F.relu(self.conv1(xi))
             xi = F.relu(self.conv2(xi))
@@ -80,7 +80,8 @@ class DilatedCNN(nn.Module):
         #print(x.shape)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
-        x = x.view(self.input_shape[0], 1, self.num_stats, self.input_shape[2], self.input_shape[3])
+        #print("fc2", x.shape)
+        x = x.view(-1, 1, self.num_stats, self.input_shape[4], self.input_shape[3])
         return x
 
 class UNet(nn.Module):
