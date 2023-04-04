@@ -11,32 +11,32 @@ class ABMDataProcessor():
     def __init__(self, config):
         self.config = config
 
-
-    def preprocess_data(self, trajectory, data_transform, config):
-        preprocessed_data = {
-            "trajectory": torch.stack([data_transform(trajectory[idx, :, :, :]).float() for idx in range(trajectory.shape[0])], dim=0)
-        }
-
-        return preprocessed_data
-
-
     def collate_fn(self, items):
         batch = {
-            "trajectory": torch.stack([x["trajectory"] for x in items], dim=0)
+            "trajectory": torch.stack([x['trajectory'] for x in items], dim=0), 
+            "next_step": torch.stack([x['next_step'] for x in items], dim=0),
+            "R0": torch.stack([x['R0'] for x in items], dim=0)
         }
 
         return batch
     
-    def get_io_data(self, trajectory_list):
-        data = {"context": [], "next_step": [], "R0": []}
+    def fn(self, trajectory_list):
+        row = [] 
 
         for i in range(len(trajectory_list)):
             for j in range(0, len(trajectory_list[i]) - self.config.context_len, self.config.context_len):
+                data = {}
+                # data = {"trajectory": [], "next_step": [], "R0": []}
                 # data["trajectory"].append(trajectory_list[i][j : (j + self.config.context_len), :])
-                data["trajectory"].append(trajectory_list[i][j:(j + self.config.context_len), :, :, :])
-                data["next_step"].append(trajectory_list[i][(j + self.config.context_len), :, :, :])
-                data["R0"].append(trajectory_list[i][j + self.config.context_len,4,0,0])
-        return data
+                data["trajectory"] = torch.Tensor(trajectory_list[i][j:(j + self.config.context_len), :, :, :])
+                data["next_step"] = torch.Tensor(trajectory_list[i][(j + self.config.context_len), :self.config.num_feat_cols, :, :])
+                data["R0"] = torch.from_numpy(np.array(trajectory_list[i][j + self.config.context_len,4,0,0]))
+                # can add time step like R0
+
+                row.append(data)
+
+        return row
+    
 
     def build_dataloaders(self, trajectories):
         trajectories_train, trajectories_test = train_test_split(trajectories, test_size=self.config.test_fraction, random_state=self.config.seed, shuffle=True)
@@ -57,15 +57,15 @@ class ABMDataProcessor():
             ]
         )
 
-        train_data = [self.preprocess_data(trajectory, data_transform) for trajectory in trajectories_train]
-        val_data = [self.preprocess_data(trajectory, data_transform) for trajectory in trajectories_val]
-        test_data = [self.preprocess_data(trajectory, data_transform) for trajectory in trajectories_test]
-
-
+        train_data = self.fn(trajectories_train)
+        val_data = self.fn(trajectories_val)
+        test_data = self.fn(trajectories_test)
 
         print("train_data sample")
         print(f"{train_data[0]['trajectory'].shape=}")
         # {'trajectory': torch.Size([4, 100, 5, 10, 10])}
+
+                
 
         train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=self.config.train_batch_size, collate_fn=self.collate_fn)
         val_dataloader = torch.utils.data.DataLoader(val_data, batch_size=self.config.val_batch_size, collate_fn=self.collate_fn)

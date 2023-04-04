@@ -32,7 +32,7 @@ PLOTS_PATH = "/content/plots"
 #         plots_table.add_data(idx, mse, rmse, wandb.Image(actual_3D), wandb.Image(prediction_3D), wandb.Image(actual_2D), wandb.Image(prediction_2D))
 
 #     return plots_table
-
+temporal_mse = []
 
 def make_plots(actuals, preds, config):
     
@@ -53,9 +53,9 @@ def make_plots(actuals, preds, config):
             ax[1, idx].axis('off')
             idx += 1
 
-        fig.suptitle("{}_{}_{}".format(args["EXP_TYPE"], Exp_Param, stat))
+        fig.suptitle("R0_{}_{}".format(Exp_Param, stat))
         # plt.show()
-        plt.savefig(PLOTS_PATH + "/{}_{}/{}_predictions.png".format(args["EXP_TYPE"], Exp_Param, stat))
+        plt.savefig(PLOTS_PATH + "/{R0_{}/{}_predictions.png".format(Exp_Param, stat))
         plt.close()
         # print("\n")
 
@@ -73,10 +73,10 @@ def make_plots(actuals, preds, config):
 
                 ax[j, k].axis('off')
 
-        fig.suptitle("{}_{}_{}".format(args["EXP_TYPE"], Exp_Param, stat))
+        fig.suptitle("R0_{}_{}".format(Exp_Param, stat))
         plt.tight_layout()
         # plt.show()
-        plt.savefig(PLOTS_PATH + "/{}_{}/{}_actuals.png".format(args["EXP_TYPE"], Exp_Param, stat))
+        plt.savefig(PLOTS_PATH + "/R0_{}/{}_actuals.png".format(Exp_Param, stat))
         plt.close()
         # print("\n")
 
@@ -94,11 +94,11 @@ def make_plots(actuals, preds, config):
 
                 ax[j, k].axis('off')
 
-        fig.suptitle("{}_{}_{}".format(args["EXP_TYPE"], Exp_Param, stat))
+        fig.suptitle("R0_{}_{}".format(Exp_Param, stat))
         plt.tight_layout()
         # plt.show()
         plt.tight_layout()
-        plt.savefig(PLOTS_PATH + "/{}_{}/{}_preds.png".format(args["EXP_TYPE"], Exp_Param, stat))
+        plt.savefig(PLOTS_PATH + "/R0_{}/{}_preds.png".format(Exp_Param, stat))
         plt.close()
         # print("\n")
 
@@ -110,12 +110,12 @@ def make_plots(actuals, preds, config):
 
         plt.xlabel("Actuals")
         plt.ylabel("Predictions")
-        fig.suptitle("{}_{}_{}".format(args["EXP_TYPE"], Exp_Param, stat))
+        fig.suptitle("R0_{}_{}".format(Exp_Param, stat))
         plt.xlim([0, 1000])
         plt.ylim([0, 1000])
         # plt.show()
         plt.tight_layout()
-        plt.savefig(PLOTS_PATH + "/{}_{}/{}_predictions_vs_actuals_scatter.png".format(args["EXP_TYPE"], Exp_Param, stat))
+        plt.savefig(PLOTS_PATH + "/R0_{}/{}_predictions_vs_actuals_scatter.png".format(Exp_Param, stat))
         plt.close()
         # print("\n\n\n")
 
@@ -143,8 +143,8 @@ def make_plots(actuals, preds, config):
             plt.plot(temporal_preds_rolled - temporal_actuals_rolled, label='difference')
             #temporal_mse[stat].append(mean_squared_error(temporal_preds_rolled, temporal_actuals_rolled))
             temporal_mse[stat].append(temporal_preds_rolled - temporal_actuals_rolled)
-            if args["CI"] == True:
-                plt.fill_between(np.arange(0,95), (95*(np.mean(preds, axis=(1, 2)) + 2 * np.std(preds, axis=(1, 2))))[:, sdx], (95*(np.mean(preds, axis=(1, 2)) - 2 * np.std(preds, axis=(1, 2))))[:, sdx], color="red", alpha=0.1, label=f"95% confidence interval")    
+            # if args["CI"] == True:
+            #     plt.fill_between(np.arange(0,95), (95*(np.mean(preds, axis=(1, 2)) + 2 * np.std(preds, axis=(1, 2))))[:, sdx], (95*(np.mean(preds, axis=(1, 2)) - 2 * np.std(preds, axis=(1, 2))))[:, sdx], color="red", alpha=0.1, label=f"95% confidence interval")    
 
         else:
             plt.plot(np.sum(actuals, axis=(1, 2))[:, sdx], label='actual')
@@ -152,11 +152,13 @@ def make_plots(actuals, preds, config):
             plt.plot(np.sum(preds - actuals, axis=(1, 2))[:, sdx], label='difference')
             #temporal_mse[stat].append(mean_squared_error(np.sum(preds, axis=(1, 2))[:, sdx], np.sum(actuals, axis=(1, 2))[:, sdx]))
             temporal_mse[stat].append(np.sum(preds, axis=(1, 2))[:, sdx] - np.sum(actuals, axis=(1, 2))[:, sdx])
-            if args["CI"] == True:
-              plt.fill_between(np.arange(0,95), (95*(np.mean(preds, axis=(1, 2)) + 2 * np.std(preds, axis=(1, 2))))[:, sdx], (95*(np.mean(preds, axis=(1, 2)) - 2 * np.std(preds, axis=(1, 2))))[:, sdx], color="red", alpha=0.1, label=f"95% confidence interval")    
+            # if args["CI"] == True:
+            #   plt.fill_between(np.arange(0,95), (95*(np.mean(preds, axis=(1, 2)) + 2 * np.std(preds, axis=(1, 2))))[:, sdx], (95*(np.mean(preds, axis=(1, 2)) - 2 * np.std(preds, axis=(1, 2))))[:, sdx], color="red", alpha=0.1, label=f"95% confidence interval")    
 
 
         plt.legend()
         plt.tight_layout()
-        plt.savefig(PLOTS_PATH + "/{}_{}/{}_temporal_plot.png".format(args["EXP_TYPE"], Exp_Param, stat))
+        plt.savefig(PLOTS_PATH + "/R0_{}/{}_temporal_plot.png".format(Exp_Param, stat))
         plt.close()
+
+        return temporal_mse
