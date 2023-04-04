@@ -12,10 +12,10 @@ from src import plots
 
 import torch
 
-def loss_function(outputs, targets, i, L):
+def loss_function(outputs, targets):
   # MSE + i/L (penalty)
   mse = torch.nn.MSELoss()
-  return torch.add(mse(outputs, targets), torch.divide(i, L))
+  return mse(outputs, targets)
 
 def loss_fn2(outputs, targets, i, L):
   # loss = (1/n) * ∑(|y - ŷ| / y) * (1 + sign(y - ŷ)) + i/L (penalty)
@@ -25,74 +25,69 @@ def loss_fn2(outputs, targets, i, L):
   return torch.add(mape_, torch.divide(i, L))
 
 class SingleStepTrainer(pl.LightningModule):
-    def __init__(self, model, loss_fn, optimizer, scheduler, config, device):
+    def __init__(self, model, config):
+        super(SingleStepTrainer, self).__init__()
         self.model = model
-        self.loss_fn = loss_fn
-        self.optimizer = optimizer
-        self.scheduler = scheduler
         self.config = config
-        self.device = device
-
         self.train_epochs = self.config.train_epochs
 
     def training_step(self, batch):
-        actual_trajectory = batch["trajectory"]  
+        context = batch["trajectory"]  
         # [B, t_steps, num_feat_cols + num_stat_cols, x_dim, y_dim]
         # print(f"{actual_trajectory.shape=}") 
 
         # [B, context_len, num_feat_cols, x_dim, y_dim] # (t_steps will be added incrementally)
-        predicted_trajectory = batch["trajectory"][:, :self.config.context_len, :self.config.num_feat_cols, :, :].float().to(self.device)
+        # predicted_trajectory = batch["trajectory"][:, :self.config.context_len, :self.config.num_feat_cols, :, :].float().to(self.device)
         # print(f"{predicted_trajectory.shape=}")
 
         # [B, context_len, num_feat_cols + num_stat_cols, x_dim, y_dim] # (constant size)
-        context = batch["trajectory"][:, :self.config.context_len, :, :, :].float().to(self.device)
+        # context = batch["trajectory"][:, :self.config.context_len, :, :, :].float().to(self.device)
         # print(f"{context.shape=}")
 
         # rolling loss
         loss = 0
 
-        for time_step in range(self.config.context_len, self.config.t_steps):
-            # get prediction for the current time_step
-            prediction = self.model(context)
-            # if (len(prediction.shape) == 2):
-            #     prediction = prediction.unsqueeze(
-            #         dim=1).unsqueeze(dim=1)  # [B, 1, 1, 1024]
-            # elif(len(prediction.shape) == 1):
-            #     prediction = prediction.unsqueeze(dim=0).unsqueeze(
-            #         dim=0).unsqueeze(dim=0)  # [B, 1, 1, 1024]
-            # else:
-            #     raise AssertionError
-            # [B, 1, num_feat_cols, x_dim, y_dim]
-            # print(f"{prediction.shape=}")
+        # for time_step in range(self.config.context_len, self.config.t_steps):
+        #     # get prediction for the current time_step
+        prediction = self.model(context)
+        # if (len(prediction.shape) == 2):
+        #     prediction = prediction.unsqueeze(
+        #         dim=1).unsqueeze(dim=1)  # [B, 1, 1, 1024]
+        # elif(len(prediction.shape) == 1):
+        #     prediction = prediction.unsqueeze(dim=0).unsqueeze(
+        #         dim=0).unsqueeze(dim=0)  # [B, 1, 1, 1024]
+        # else:
+        #     raise AssertionError
+        # [B, 1, num_feat_cols, x_dim, y_dim]
+        # print(f"{prediction.shape=}")
 
-            # get target for the current time_step
-            target = actual_trajectory[:, time_step, :self.config.num_feat_cols, :, :].unsqueeze(dim=1).float().to(self.device)  
-            # [B, 1, num_feat_cols, x_dim, y_dim]
-            # print(f"{target.shape=}")
+        # get target for the current time_step
+        target = batch["next_step"] # actual_trajectory[:, time_step, :self.config.num_feat_cols, :, :].unsqueeze(dim=1).float().to(self.device)  
+        # [B, 1, num_feat_cols, x_dim, y_dim]
+        # print(f"{target.shape=}")
 
-            # update loss
-            #batch_loss = self.loss_fn(target, prediction)
-            batch_loss = loss_function(prediction, target, time_step, self.config.t_steps)
-            loss += batch_loss
-            self.optimizer.zero_grad()
-            batch_loss.backward()
-            self.optimizer.step()
+        # update loss
+        #batch_loss = self.loss_fn(target, prediction)
+        print(prediction.shape, target.shape)
+        batch_loss = loss_function(prediction, target)
+        loss = batch_loss
+        # self.optimizer.zero_grad()
+        # batch_loss.backward()
+        # self.optimizer.step()
 
-            # remove prediction from the computation graph
-            prediction = prediction.detach()
+        # remove prediction from the computation graph
+        # prediction = prediction.detach()
 
-            # update context tensor
-            # [B, context_len, num_feat_cols + num_stat_cols, x_dim, y_dim] # (constant size)
-            context[:, :, :self.config.num_feat_cols, :, :] = torch.cat((context[:, 1:, :self.config.num_feat_cols, :, :], prediction), dim=1)
-            context[:, -1, self.config.num_feat_cols:, :, :] = actual_trajectory[:, time_step, self.config.num_feat_cols:, :, :]
+        # # update context tensor
+        # # [B, context_len, num_feat_cols + num_stat_cols, x_dim, y_dim] # (constant size)
+        # context[:, :, :self.config.num_feat_cols, :, :] = torch.cat((context[:, 1:, :self.config.num_feat_cols, :, :], prediction), dim=1)
+        # context[:, -1, self.config.num_feat_cols:, :, :] = actual_trajectory[:, time_step, self.config.num_feat_cols:, :, :]
 
-            # update predicted_trajectory
-            predicted_trajectory = torch.cat((predicted_trajectory, prediction), dim=1)
+        
+        if (self.config.use_wandb):
+            wandb.log({"batch_loss": loss})
 
-            if (self.config.use_wandb):
-                wandb.log({"batch_loss": batch_loss})
-
-        self.scheduler.step(batch_loss)
+        # self.scheduler.step(batch_loss)
 
         return loss
 
@@ -110,8 +105,8 @@ class SingleStepTrainer(pl.LightningModule):
     #             wandb.log({"epoch_loss"
     #                       : epoch_loss.item()/len(dataloader)})
 
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
+    # def validation_step(self, batch, batch_idx):
+    #     x, y = batch
         
         
 
