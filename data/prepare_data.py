@@ -29,7 +29,7 @@ class ABMDataProcessor():
                 # data = {"trajectory": [], "next_step": [], "R0": []}
                 # data["trajectory"].append(trajectory_list[i][j : (j + self.config.context_len), :])
                 data["trajectory"] = torch.Tensor(trajectory_list[i][j:(j + self.config.context_len), :, :, :])
-                data["next_step"] = torch.Tensor(trajectory_list[i][(j + self.config.context_len), :self.config.num_feat_cols, :, :])
+                data["next_step"] = torch.Tensor(trajectory_list[i][(j + self.config.context_len), :, :, :self.config.num_feat_cols])
                 data["R0"] = torch.from_numpy(np.array(trajectory_list[i][j + self.config.context_len,4,0,0]))
                 # can add time step like R0
 
@@ -63,6 +63,7 @@ class ABMDataProcessor():
 
         print("train_data sample")
         print(f"{train_data[0]['trajectory'].shape=}")
+        # [5, 10, 10, 5]
         # {'trajectory': torch.Size([4, 100, 5, 10, 10])}
 
                 

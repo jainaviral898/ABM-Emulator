@@ -50,6 +50,7 @@ class SingleStepTrainer(pl.LightningModule):
         # for time_step in range(self.config.context_len, self.config.t_steps):
         #     # get prediction for the current time_step
         prediction = self.model(context)
+        prediction = torch.squeeze(prediction, dim=1)
         # if (len(prediction.shape) == 2):
         #     prediction = prediction.unsqueeze(
         #         dim=1).unsqueeze(dim=1)  # [B, 1, 1, 1024]
@@ -63,12 +64,13 @@ class SingleStepTrainer(pl.LightningModule):
 
         # get target for the current time_step
         target = batch["next_step"] # actual_trajectory[:, time_step, :self.config.num_feat_cols, :, :].unsqueeze(dim=1).float().to(self.device)  
+        target = target.permute(0, 3, 1, 2)
         # [B, 1, num_feat_cols, x_dim, y_dim]
         # print(f"{target.shape=}")
 
         # update loss
         #batch_loss = self.loss_fn(target, prediction)
-        print(prediction.shape, target.shape)
+        #print(prediction.shape, target.shape)
         batch_loss = loss_function(prediction, target)
         loss = batch_loss
         # self.optimizer.zero_grad()
@@ -83,9 +85,10 @@ class SingleStepTrainer(pl.LightningModule):
         # context[:, :, :self.config.num_feat_cols, :, :] = torch.cat((context[:, 1:, :self.config.num_feat_cols, :, :], prediction), dim=1)
         # context[:, -1, self.config.num_feat_cols:, :, :] = actual_trajectory[:, time_step, self.config.num_feat_cols:, :, :]
 
-        
+        self.log("train_loss", loss)
+
         if (self.config.use_wandb):
-            wandb.log({"batch_loss": loss})
+            wandb.log({"train_batch_loss": loss})
 
         # self.scheduler.step(batch_loss)
 
@@ -105,10 +108,16 @@ class SingleStepTrainer(pl.LightningModule):
     #             wandb.log({"epoch_loss"
     #                       : epoch_loss.item()/len(dataloader)})
 
-    # def validation_step(self, batch, batch_idx):
-    #     x, y = batch
-        
-        
+    def validation_step(self, batch, batch_idx):
+        x = batch['trajectory']
+        y = batch['next_step']
+        scores = self.model(x)
+        scores = torch.squeeze(scores)
+        y = y.permute(0, 3, 1, 2)
+        loss = loss_function(scores, y)
+        self.log("val_loss", loss)
+        return loss
+
 
     def predict_step(self, batch, batch_idx):
         # with torch.no_grad():

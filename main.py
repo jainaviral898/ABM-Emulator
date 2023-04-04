@@ -92,12 +92,14 @@ if __name__ == "__main__":
 
     num_training_steps = config.train_epochs * len(train_dataloader)
 
-    lightning_mod = SingleStepTrainer(model, loss_fn, config)
+    lightning_mod = SingleStepTrainer(model, config)
     if (config.train):
-        trainer = pl.Trainer(accelerator = "gpu", devices = 1)       
+        trainer = pl.Trainer(accelerator = "gpu", devices = 1, max_epochs = config.train_epochs)       
         trainer.fit(model = lightning_mod, train_dataloaders = train_dataloader)
         print("Training complete.")
 
+    val_loss = trainer.validate(model = lightning_mod, dataloaders=val_dataloader)
+    print("Loss on validation set:", val_loss)
     # maybe save model and optimizer
     if (config.save_model_optimizer):
         print("saving model, optimizer, and scheduler at {}/model_optimizer_scheduler.pt".format(config.save_load_path))
