@@ -30,7 +30,7 @@ class ABMDataProcessor():
                 # data["trajectory"].append(trajectory_list[i][j : (j + self.config.context_len), :])
                 data["trajectory"] = torch.Tensor(trajectory_list[i][j:(j + self.config.context_len), :, :, :])
                 data["next_step"] = torch.Tensor(trajectory_list[i][(j + self.config.context_len), :, :, :self.config.num_feat_cols])
-                data["R0"] = torch.from_numpy(np.array(trajectory_list[i][j + self.config.context_len,4,0,0]))
+                data["R0"] = torch.from_numpy(np.array(trajectory_list[i][j + self.config.context_len,0,0,4]))
                 # can add time step like R0
 
                 row.append(data)
@@ -65,8 +65,21 @@ class ABMDataProcessor():
         print(f"{train_data[0]['trajectory'].shape=}")
         # [5, 10, 10, 5]
         # {'trajectory': torch.Size([4, 100, 5, 10, 10])}
+        # test data -> list of len 988, one element of list is a dict with keys: trajectory, next_step, R0, of shape (5, 10, 10, 5)
+        # make X_test, y_test of shape (988, 5, 10, 10, 5), (988, 1, 10, 10, 3)
+        # and R0_list of shape (988, 1)
 
-                
+        X_test = []
+        y_test = []
+        R0_list = []
+        for batch in test_data:
+            X_test.append(batch["trajectory"])
+            y_test.append(batch["next_step"])
+            R0_list.append(batch["R0"])
+
+        X_test = torch.stack(X_test, dim=0)
+        y_test = torch.stack(y_test, dim=0)
+        R0_list = torch.stack(R0_list, dim=0)
 
         train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=self.config.train_batch_size, collate_fn=self.collate_fn)
         val_dataloader = torch.utils.data.DataLoader(val_data, batch_size=self.config.val_batch_size, collate_fn=self.collate_fn)
@@ -77,12 +90,4 @@ class ABMDataProcessor():
             print({key: batch[key].shape for key in batch.keys()})
             break
 
-        return train_dataloader, val_dataloader, test_dataloader
-
-# invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
-#                                                      std = [ 1/0.229, 1/0.224, 1/0.225 ]),
-#                                 transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
-#                                                      std = [ 1., 1., 1. ]),
-#                                ])
-
-# inv_tensor = invTrans(inp_tensor)
+        return train_dataloader, val_dataloader, X_test, y_test, R0_list
