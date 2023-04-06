@@ -12,26 +12,136 @@ from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 pred_len = 95
 PLOTS_PATH = "/content/plots"
 
-# def plot_trajectories(config, x_grid, t_grid, actual_trajectory_tensor, predicted_trajectory_tensor, save_dir, save_plots_every_x_trajectories, save_single_step_plots=False):
-#     os.makedirs(save_dir, exist_ok=True)
-#     mesh_x, mesh_t = np.meshgrid(x_grid, t_grid)
 
-#     mean_squared_error = MeanSquaredError()
+def plot_trajectories(config, x_grid, t_grid, actual_trajectory_tensor, predicted_trajectory_tensor, save_dir, save_plots_every_x_trajectories, save_single_step_plots=False):
+    os.makedirs(save_dir, exist_ok=True)
+    mesh_x, mesh_t = np.meshgrid(x_grid, t_grid)
 
-#     columns = ["id", "MSE", "RMSE", "actual_3D", "prediction_3D", "actual_2D", "prediction_2D"]
-#     plots_table = wandb.Table(columns=columns)
-#     for idx in tqdm(range(0, actual_trajectory_tensor.shape[0], save_plots_every_x_trajectories)):
-#         actual = actual_trajectory_tensor[idx, :, :, :].squeeze()
-#         predicted = predicted_trajectory_tensor[idx, :, :, :].squeeze()
+    mean_squared_error = MeanSquaredError()
 
-#         actual_3D, prediction_3D, actual_2D, prediction_2D = make_trajectory_plots(x_grid, t_grid, mesh_x, mesh_t, actual, predicted, save_dir, idx, save_single_step_plots)
+    columns = ["id", "MSE", "RMSE", "actual_3D", "prediction_3D", "actual_2D", "prediction_2D"]
+    plots_table = wandb.Table(columns=columns)
+    for idx in tqdm(range(0, actual_trajectory_tensor.shape[0], save_plots_every_x_trajectories)):
+        actual = actual_trajectory_tensor[idx, :, :, :].squeeze()
+        predicted = predicted_trajectory_tensor[idx, :, :, :].squeeze()
 
-#         mse = mean_squared_error(actual, predicted)
-#         rmse = np.sqrt(mse)
+        actual_3D, prediction_3D, actual_2D, prediction_2D = make_trajectory_plots(x_grid, t_grid, mesh_x, mesh_t, actual, predicted, save_dir, idx, save_single_step_plots)
 
-#         plots_table.add_data(idx, mse, rmse, wandb.Image(actual_3D), wandb.Image(prediction_3D), wandb.Image(actual_2D), wandb.Image(prediction_2D))
+        mse = mean_squared_error(actual, predicted)
+        rmse = np.sqrt(mse)
 
-#     return plots_table
+        plots_table.add_data(idx, mse, rmse, wandb.Image(actual_3D), wandb.Image(prediction_3D), wandb.Image(actual_2D), wandb.Image(prediction_2D))
+
+    return plots_table
+
+
+def make_trajectory_plots(x_grid, t_grid, mesh_x, mesh_t, actual_trajectory, predicted_trajectory, save_dir, traj_idx, save_single_step_plots):
+    plot_save_dir = "{}/trajectory-{}/".format(save_dir, traj_idx)
+    os.makedirs(plot_save_dir, exist_ok=True)
+
+    plot_save_path = "{}/actual.png".format(plot_save_dir)
+    make_3D_plot_for_1D_trajectory(actual_trajectory.cpu().squeeze().numpy(), x_grid, t_grid, save_path=plot_save_path)
+    actual_3D = Image.open(plot_save_path)
+
+    plot_save_path = "{}/actual-2D.png".format(plot_save_dir)
+    make_2D_plot_for_1D_trajectory(actual_trajectory, x_grid, t_grid, save_path=plot_save_path)
+    actual_2D = Image.open(plot_save_path)
+
+    if (save_single_step_plots ):
+        save_2D_plot_for_1D_trajectory_single_step(actual_trajectory, x_grid, t_grid, save_dir="{}/single-step-actual/".format(plot_save_dir))
+
+    plot_save_path = "{}/predicted.png".format(plot_save_dir)
+    make_3D_plot_for_1D_trajectory(predicted_trajectory.cpu().squeeze().numpy(), x_grid, t_grid, save_path=plot_save_path)
+    prediction_3D = Image.open(plot_save_path)
+
+    plot_save_path = "{}/predicted-2D.png".format(plot_save_dir)
+    make_2D_plot_for_1D_trajectory(predicted_trajectory, x_grid, t_grid, save_path=plot_save_path)
+    prediction_2D = Image.open(plot_save_path)
+
+    if (save_single_step_plots):
+        # save_2D_plot_for_1D_trajectory_single_step(predicted_trajectory, x_grid, t_grid, save_dir="{}/single-step-predicted/".format(plot_save_dir))
+        save_2D_plot_for_1D_trajectory_single_step_combined(actual_trajectory, predicted_trajectory, x_grid, t_grid, save_dir="{}/single-step-combined/".format(plot_save_dir))
+
+    return actual_3D, prediction_3D, actual_2D, prediction_2D
+
+
+def make_2D_plot_for_1D_trajectory(u, x, t, save_path=None):
+    mesh_x, mesh_t = np.meshgrid(x, t)
+
+    colors = iter(cm.rainbow(np.linspace(0, 1, u.shape[0])))
+    plt.figure(figsize=(16, 9))
+    for i in range(0, u.shape[0], 2):
+        plt.plot(u[i, :], label=i, color=next(colors))
+    plt.xlabel("x", fontsize=15)
+    plt.ylabel("u", fontsize=15)
+    plt.xticks(ticks=range(0, mesh_x.shape[1], 50), labels=np.round(mesh_x[0, :][::50], 2))
+    plt.tight_layout()
+
+    if (save_path is None):
+        plt.show()
+
+    else:
+        plt.savefig(save_path)
+        plt.close()
+
+
+def save_2D_plot_for_1D_trajectory_single_step(u, x, t, save_dir):
+    os.makedirs(save_dir, exist_ok=True)
+    mesh_x, mesh_t = np.meshgrid(x, t)
+
+    colors = iter(cm.rainbow(np.linspace(0, 1, u.shape[0])))
+    plt.figure(figsize=(16, 9))
+    for i in range(0, u.shape[0], 5):
+        plt.plot(u[i, :], label=i, color=next(colors))
+        plt.xlabel("x", fontsize=15)
+        plt.ylabel("u", fontsize=15)
+        plt.xticks(ticks=range(0, mesh_x.shape[1], 50), labels=np.round(mesh_x[0, :][::50], 2))
+        plt.tight_layout()
+        plt.savefig("{}/timestep_{}.png".format(save_dir, i))
+        plt.close()
+
+def save_2D_plot_for_1D_trajectory_single_step_combined(u, v, x, t, save_dir):
+    os.makedirs(save_dir, exist_ok=True)
+    mesh_x, mesh_t = np.meshgrid(x, t)
+
+    colors = iter(cm.rainbow(np.linspace(0, 1, u.shape[0])))
+    plt.figure(figsize=(16, 9))
+    for i in range(0, u.shape[0], 5):
+        nc = next(colors)
+        plt.plot(u[i, :], label=i, color=nc)
+        plt.plot(v[i, :], label=i, color=nc)
+        plt.xlabel("x", fontsize=15)
+        plt.ylabel("u", fontsize=15)
+        plt.xticks(ticks=range(0, mesh_x.shape[1], 50), labels=np.round(mesh_x[0, :][::50], 2))
+        plt.tight_layout()
+        plt.savefig("{}/timestep_{}.png".format(save_dir, i))
+        plt.close()
+
+def make_3D_plot_for_1D_trajectory(u, x, t, save_path=None):
+    mesh_x, mesh_t = np.meshgrid(x, t)
+
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.add_subplot(projection='3d')
+    surf = ax.plot_surface(mesh_x, mesh_t, u, cmap='Blues', linewidth=0, antialiased=False)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    ax.set_xlabel("x", fontsize=15)
+    ax.set_ylabel("t", fontsize=15)
+    ax.set_zlabel("u", fontsize=15)
+    plt.tight_layout()
+
+    if (save_path is None):
+        plt.show()
+
+    else:
+        plt.savefig(save_path)
+        plt.close()
+
+
+
+
+
 temporal_mse = []
 
 def make_plots(actuals, preds, config):

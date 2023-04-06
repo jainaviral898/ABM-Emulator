@@ -119,5 +119,7 @@ if __name__ == "__main__":
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     if(config.make_plots):
-        outputs = trainer.predict()
-        make_plots(outputs["actual_trajectory"], outputs["predicted_trajectory"], config)
+        # outputs = trainer.predict(model = lightning_mod, dataloaders = test_dataloader)
+        # make_plots(outputs["actual_trajectory"], outputs["predicted_trajectory"], config)
+        actual_trajectory_tensor, predicted_trajectory_tensor = lightning_mod.test(test_dataloader)
+        lightning_mod.plot_trajectories(config, actual_trajectory_tensor, predicted_trajectory_tensor)
