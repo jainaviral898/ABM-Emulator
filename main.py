@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print("Data loaded. Length =", len(data))
 
     data_processor = ABMDataProcessor(config)
-    train_dataloader, val_dataloader, test_dataloader = data_processor.build_dataloaders(data)
+    train_dataloader, val_dataloader, X_test, y_test, R0_list = data_processor.build_dataloaders(data)
 
     # model = FeedForward(config)
     # model.to(device)
@@ -80,15 +80,13 @@ if __name__ == "__main__":
     # scheduler = torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lmbda)
     # loss_fn = torch.nn.MSELoss()
 
-    model     = set_model(config, device)
-    optimizer = set_optimizer(config, model)
-    scheduler = set_scheduler(config, optimizer)
-    loss_fn   = set_loss_fn(config)
-    
+    model = set_model(config, device)
+        
     print("Testing model on sample input")
     out = model(torch.rand(4, config.context_len, 5, 10, 10).to(device))
     print("Model Output Shape", out.shape)
     print("________________________________________________________")
+    print('\n')
 
     num_training_steps = config.train_epochs * len(train_dataloader)
 
@@ -101,25 +99,23 @@ if __name__ == "__main__":
     val_loss = trainer.validate(model = lightning_mod, dataloaders=val_dataloader)
     print("Loss on validation set:", val_loss)
     # maybe save model and optimizer
-    if (config.save_model_optimizer):
-        print("saving model, optimizer, and scheduler at {}/model_optimizer_scheduler.pt".format(config.save_load_path))
-        os.makedirs("{}/".format(config.save_load_path), exist_ok=True)
-        torch.save({
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'scheduler_state_dict': scheduler.state_dict(),
-        }, "{}/model_optimizer_scheduler.pt".format(config.save_load_path))
+    # if (config.save_model_optimizer):
+    #     print("saving model, optimizer, and scheduler at {}/model_optimizer_scheduler.pt".format(config.save_load_path))
+    #     os.makedirs("{}/".format(config.save_load_path), exist_ok=True)
+    #     torch.save({
+    #         'model_state_dict': model.state_dict(),
+    #         'optimizer_state_dict': optimizer.state_dict(),
+    #         'scheduler_state_dict': scheduler.state_dict(),
+    #     }, "{}/model_optimizer_scheduler.pt".format(config.save_load_path))
 
-    # maybe load model and optimizer
-    if (config.load_model_optimizer):
-        print("loading model and optimizer from {}/model_optimizer_scheduler.pt".format(config.save_load_path))
-        checkpoint = torch.load(
-            "{}/model_optimizer_scheduler.pt".format(config.save_load_path))
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    # # maybe load model and optimizer
+    # if (config.load_model_optimizer):
+    #     print("loading model and optimizer from {}/model_optimizer_scheduler.pt".format(config.save_load_path))
+    #     checkpoint = torch.load(
+    #         "{}/model_optimizer_scheduler.pt".format(config.save_load_path))
+    #     model.load_state_dict(checkpoint['model_state_dict'])
+    #     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     if(config.make_plots):
-        # outputs = trainer.predict(model = lightning_mod, dataloaders = test_dataloader)
-        # make_plots(outputs["actual_trajectory"], outputs["predicted_trajectory"], config)
-        actual_trajectory_tensor, predicted_trajectory_tensor = lightning_mod.test(test_dataloader)
-        lightning_mod.plot_trajectories(config, actual_trajectory_tensor, predicted_trajectory_tensor)
+        # R0_list, actual_trajectory_tensor, predicted_trajectory_tensor = trainer.test(test_dataloader)
+        lightning_mod.plot_trajectories(config, X_test, y_test, R0_list)

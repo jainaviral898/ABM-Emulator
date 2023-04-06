@@ -1,1 +1,0 @@
-neural-agent-based-modeling/config.yaml
