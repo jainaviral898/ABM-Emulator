@@ -12,6 +12,7 @@ data_path: /content/drive/MyDrive/Emulator_Phase_2/Simulator_v1.7/results/v1.7_R
 train_fraction: 0.8
 val_fraction: 0.1
 test_fraction: 0.1
+block_count: 1000
 t_steps: 100
 context_len: 5
 x_dim: 10
