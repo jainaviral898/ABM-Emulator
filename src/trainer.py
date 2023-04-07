@@ -158,6 +158,8 @@ class SingleStepTrainer(pl.LightningModule):
         print('\n')
         print("_______________________________________Making Plots_______________________________________")
         print('\n')
+        X_test = torch.from_numpy(X_test)
+        y_test = torch.from_numpy(y_test)
         X_test = X_test.permute((0,1,4,2,3))
         print("X_test shape", X_test.shape)
         for kdx, i in tqdm(enumerate(range(0, len(X_test), pred_len)), total=len(range(0, len(X_test), pred_len))):
@@ -174,6 +176,7 @@ class SingleStepTrainer(pl.LightningModule):
             
             
             for j in range(0, pred_len):
+              # print("MODEL INPUT SHAPE", input.shape)
               output = self.model(input)
               squeeze_output = output.squeeze()
               squeeze_output = squeeze_output.detach().numpy()

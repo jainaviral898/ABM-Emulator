@@ -67,12 +67,12 @@ if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     print("Loading data")
-    data = load_abm_data(config.data_path)
-    print("Data loaded. Length =", len(data))
+    X_train, y_train, X_val, y_val, X_test, y_test, X_test_R0s = load_abm_data(config.data_path, config)
+    # print("Data loaded. Length =", len(data))
 
     data_processor = ABMDataProcessor(config)
-    train_dataloader, val_dataloader, X_test, y_test, R0_list = data_processor.build_dataloaders(data)
-
+    train_dataloader = data_processor.build_dataloaders(X_train, y_train, config.train_batch_size)
+    val_dataloader =  data_processor.build_dataloaders(X_val, y_val, config.val_batch_size)
     # model = FeedForward(config)
     # model.to(device)
     # optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
@@ -118,4 +118,4 @@ if __name__ == "__main__":
 
     if(config.make_plots):
         # R0_list, actual_trajectory_tensor, predicted_trajectory_tensor = trainer.test(test_dataloader)
-        lightning_mod.plot_trajectories(config, X_test, y_test, R0_list)
+        lightning_mod.plot_trajectories(config, X_test, y_test, X_test_R0s)
