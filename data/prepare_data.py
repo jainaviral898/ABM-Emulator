@@ -57,10 +57,10 @@ class ABMDataProcessor():
 
         # print("train data mean, std")
         self.channel_mean = [np.mean(np.stack(X, axis=0)[:,:,:,:,i]) for i in range(X.shape[-1])]
-        print("mean list len", len(self.channel_mean))
+        #print("mean list len", len(self.channel_mean))
 
         self.channel_std = [np.std(np.stack(X, axis=0)[:,:,:,:,i]) for i in range(X.shape[-1])]
-        print("std list len", len(self.channel_std))
+        #print("std list len", len(self.channel_std))
 
         # self.channel_mean = [np.mean(np.stack(trajectories_train, axis=0)[:, :, :, :, i]) for i in range(trajectories_train[0].shape[-1])]
         # self.channel_std = [np.std(np.stack(trajectories_train, axis=0)[:, :, :, :, i]) for i in range(trajectories_train[0].shape[-1])]
@@ -75,9 +75,9 @@ class ABMDataProcessor():
 
         data = self.fn(X, y)
 
-        print("data sample")
-        print(f"{data[0]['trajectory'].shape=}")
-        # [5, 10, 10, 5]
+        # print("data sample")
+        # print(f"{data[0]['trajectory'].shape=}")
+        # # [5, 10, 10, 5]
         # {'trajectory': torch.Size([4, 100, 5, 10, 10])}
         # test data -> list of len 988, one element of list is a dict with keys: trajectory, next_step, R0, of shape (5, 10, 10, 5)
         # make X_test, y_test of shape (988, 5, 10, 10, 5), (988, 1, 10, 10, 3)

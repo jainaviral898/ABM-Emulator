@@ -67,7 +67,8 @@ def load_abm_data(data_path, config):
         if (sdx+1 > num_val_sims):
             X_test_R0s.append(R0)
 
-    X_train = [ x/int(config.block_count) for x in X_train]
+    X_train = np.array(X_train)/config.block_count
+    #X_train = [ x/int(config.block_count) for x in X_train]
 
     X_train[:, :, :, :, -1] = X_train[:, :, :, :, -1]*config.block_count
     y_train = np.array(y_train)/config.block_count
@@ -79,9 +80,10 @@ def load_abm_data(data_path, config):
     X_test[:, :, :, :, -1] = X_test[:, :, :, :, -1]*config.block_count
     y_test = np.array(y_test)/config.block_count
 
-    print(X_train.shape, y_train.shape)
-    print(X_val.shape, y_val.shape)
-    print(X_test.shape, y_test.shape)
+    print("Train", X_train.shape, y_train.shape)
+    print("Validation", X_val.shape, y_val.shape)
+    print("Test", X_test.shape, y_test.shape)
+    print("________________________________________________")
 
     return X_train, y_train, X_val, y_val, X_test, y_test, X_test_R0s
 

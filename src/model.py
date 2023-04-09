@@ -69,6 +69,7 @@ class DilatedCNN(nn.Module):
         x = x.reshape(-1, x.shape[0], x.shape[2], x.shape[3], x.shape[4])
         #print("here", x.shape)
         for xi in x:
+            xi = xi.float()
             xi = F.relu(self.conv1(xi))
             xi = F.relu(self.conv2(xi))
             xi = F.relu(self.conv3(xi))

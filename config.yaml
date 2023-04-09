@@ -1,11 +1,12 @@
 # general parameters
 seed:  3407
-save_load_path: experiments/baseline-script-check 
+save_load_path: /content/drive/MyDrive/Emulator_Phase_2/Emulator_Results
+exp_version: v3.00 
 train: True
 inference: True
 make_plots: True
-save_model_optimizer: False
-load_model_optimizer: False
+save_model: False
+load_model: False
 
 # data parameters
 data_path: /content/drive/MyDrive/Emulator_Phase_2/Simulator_v1.7/results/v1.7_R0_Experiments/
@@ -24,18 +25,11 @@ stats: ["cumulative_positive_tested", "current_hospitalized", "current_asymptoma
 # training parameters
 train_batch_size: 4
 val_batch_size: 4
-train_epochs: 2
+train_epochs: 1
 learning_rate: 0.001
 # model = feedforward, dilatedcnn,
-model: feedforward
-# loss = mse
-loss_fn: mse
-# optimizer = adam, sgd 
-optimizer: adam
-# scheduler = multiplicative, step, decay
-scheduler: step
+model: dilatedcnn
 
 # wandb parameters
 use_wandb: True
-wandb_path: baseline-script-check
 wandb_project: neural-agent-based-modeling 
