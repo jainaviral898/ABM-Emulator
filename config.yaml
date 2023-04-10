@@ -1,12 +1,10 @@
 # general parameters
 seed:  3407
-save_load_path: /content/drive/MyDrive/Emulator_Phase_2/Emulator_Results
+save_load_path: /content/drive/MyDrive/Emulator_Phase_2/Emulator_Results/
 exp_version: v3.00 
 train: True
-inference: True
-make_plots: True
-save_model: False
-load_model: False
+save_model: True
+load_model: True
 
 # data parameters
 data_path: /content/drive/MyDrive/Emulator_Phase_2/Simulator_v1.7/results/v1.7_R0_Experiments/
@@ -27,7 +25,6 @@ train_batch_size: 4
 val_batch_size: 4
 train_epochs: 1
 learning_rate: 0.001
-# model = feedforward, dilatedcnn,
 model: dilatedcnn
 
 # wandb parameters

@@ -14,8 +14,8 @@ def load_abm_data(data_path, config):
     # return data
     sub_grid_list = sorted(glob.glob("{}/*/*.npy".format(data_path)))
     sub_grid_R0_list = [float(sim_path.split('/')[-2].split('_')[2]) for sim_path in sub_grid_list]
-    print("Length =", len(sub_grid_R0_list))
-    print("sub_grid_R0_list", sub_grid_R0_list)
+    # print("Length =", len(sub_grid_R0_list))
+    # print("sub_grid_R0_list", sub_grid_R0_list)
     sub_grid_list = np.array(sub_grid_list)
     sub_grid_R0_list = np.array(sub_grid_R0_list)
 
