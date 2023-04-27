@@ -4,7 +4,7 @@
 
 As an alternative to Agent-Based simulation Models, a deep learning-based emulator can be developed as a surrogate model that can predict the Agent-Based Simulator's output based on its initial conditions and parameters.
 
-![alt text](https://github.com/jainaviral898/abm-emulator/tree/main/assets/working.jpg?raw=true)
+![alt text](assets/working.jpg)
 
 ## Experiment Log
 
