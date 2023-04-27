@@ -1,8 +1,42 @@
-Neural Agent Based Modeling
+# Neural Agent Based Modeling
 
-Experiment Log
+## Introduction
 
-Model/Loss	MSE	    negloglik	MAE	    MAE + penalty	MSE + penalty   MAPE
-DilatedCNN	3.11	3.21	    3.31	3.41	        3.51            3.61
-ConvLSTM	3.12	3.22	    3.32	3.42	        3.52
-3D-CNN	    3.13	3.23	    3.33	3.43	        3.53
+As an alternative to Agent-Based simulation Models, a deep learning-based emulator can be developed as a surrogate model that can predict the Agent-Based Simulator's output based on its initial conditions and parameters.
+
+![alt text](https://github.com/jainaviral898/abm-emulator/tree/main/assets/working.jpg?raw=true)
+
+## Experiment Log
+
+
+v3.11 - Dilated CNN         MSE Loss
+
+v3.12 - ConvLSTM            MSE Loss
+
+v3.13 - 3D-CNN              MSE Loss
+
+v3.21 - Dilated CNN         negative log likelihood Loss
+
+v3.22 - ConvLSTM            negative log likelihood Loss
+
+v3.23 - 3D-CNN              negative log likelihood Loss
+
+v3.31 - Dilated CNN         MAE Loss
+
+v3.32 - ConvLSTM            MAE Loss
+
+v3.33 - 3D-CNN              MAE Loss
+
+v3.41 - Dilated CNN         MAE + penalty Loss
+
+v3.42 - ConvLSTM            MAE + penalty Loss
+
+v3.43 - 3D-CNN              MAE + penalty Loss
+
+v3.51 - Dilated CNN         MSE + penalty Loss
+
+v3.52 - ConvLSTM            MSE + penalty Loss
+
+v3.53 - 3D-CNN              MSE + penalty Loss
+
+v3.61 - Dilated CNN         MAPE Loss
